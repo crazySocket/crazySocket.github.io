@@ -293,7 +293,7 @@ JNIEXPORT jint JNICALL Java_Test_00024NativeCounter_increment
 Function 'increase' is defined extern because I want to make sure I have the best compare and swap implementation; I want to be as close to processor as possible hence we go down to forbidden realm of assembler.
 
 increase.asm
-```asm
+```assembly
 global increase
 
 section .text
@@ -334,6 +334,7 @@ Well, there goes our improvement. It is time to revalidate our opinion on CAS lo
 Oh. What is that change about? File increase.asm contains `increase` function that takes pointer to integer and increase this integer in CAS loop. The loop is transaction implementation. The job is to read data from memory, increase it and store back. If failed, repeat. The change essentially gets rid of CAS loop. Increment instruction always succeed; the loop executes once. There are no failures. You can make sure the counter has correct value; print it afterwards. The CAS loop failed to deliver performance I hoped for.
 
 You do not have to go into assembler depth. You can use utilities packed with gcc. For instance `__sync_add_and_fetch(&i, 1)` instead of `increase(&i)` or
+
 ```java
 int a;
 do {
