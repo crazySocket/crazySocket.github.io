@@ -1,0 +1,3 @@
+{
+  hello = import ./hello.nix;
+}

@@ -1,13 +1,13 @@
 ---
 layout: post
-title:  "optimistic locking basics in java"
-date:   2017-02-12 00:27:55 +0100
+title: optimistic locking basics in java
+date: 2017-02-12 00:27:55 +0100
 categories: java concurrency
 ---
 
 ## fast, lean, frightening - what industry desires
 
-Have you ever got this feeling looking at ludicroulsy long stacktrace, deploying 200MB war, restarting web app running on tomcat on virtual machine that java might be somewhat heavy? I mean each function call adds frame to stacktrace. So when you scroll through nested exceptions you must wonder - how much it all costs?
+Have you ever got this feeling looking at ludicroulsy long stacktrace, deploying 200MB war, restarting web app running on tomcat on virtual machine that java might be somewhat heavy? I mean each function call adds frame to stacktrace. So when you scroll through nested exceptions you must wonder - how much it all cost?
 
 What about application containers? These feel like necessary evil; especially during development. Why must I push every single bit of application every time? Just imagine you are a new developer in the team. You get a (maven) project with configuration expanded beyond freaking time and space. You propably think: god save me from ever modifying that. So you comply, do your job, build and push the whole war as soon as it builds.
 
@@ -15,15 +15,15 @@ With experience like this - traumas piling up - you come across for instance [pr
 
 However, as time passes by you dropped the ill (maven) configuration and replaced with something more sensible (gradle), removed tomcat from development for jetty plugin or (even better) nice integration tests. You managed to lower build time from half an hour to a minute and startup from 5 minutes to 30 seconds. Now you cannot help but wonder: why the project did not look like this before? Ahh, I know. Let's not delve in the past; let it rest in peace.
 
-How now look these "10's of millions per second"? Well, seriously? To be honest I still doubt it. I mean, who needs SOAP interface to serve such traffic? Ahh, I forgot SOAP has been somewhat condemned. Nowadays marketing guys jerks off with REST. Even suggesting that SOAP might have some advantages makes you frowned upon. Not that these people now the difference. REST sells, SOAP does not. Its that simple.
+How now look these "10's of millions per second"? Well, seriously? To be honest I still doubt it. I mean, who needs SOAP interface to serve such traffic? Ahh, I forgot [SOAP](https://en.wikipedia.org/wiki/SOAP) has been somewhat condemned. Nowadays marketing guys jerks off with [REST](https://en.wikipedia.org/wiki/Representational_state_transfer). Even suggesting that SOAP might have some advantages makes you frowned upon. Not that these people now the difference. REST sells, SOAP does not. Its that simple.
 
-What else sells today? Scalability? High throughput? SaaS? Low development cost? Ohh, the last one always sells. Client does not really care or see that cost. Your boss does. And they will always go for least amount of effort. Think about it; why script languages gather such interest? You are not gonna set up a service with bash, are you? With bash not, but with javascript? Sure. Now you entered nodejs realm.
+What else sells today? Scalability? High throughput? SaaS? Low development cost? Ohh, the last one always sells. Client does not really care or see that cost. Your boss does. And they will always go for least amount of effort. Think about it; why script languages gather such interest? You are not gonna set up a service with bash, are you? With bash not, but with javascript? Sure. Now you've entered nodejs realm.
 
 My introduction got little off the topic so let's get back on track. To summarize, industry wants to achieve always available service that is easy to create and maintain. In order to achieve these goals we need tools that are both simple to use and powerful. [reactor] promises "10's of millions" to advertise how powerful the solution is.
 
-How to measure easiness? Take for instance development time taken to use/apply a tool. You need database? Get an image from [dockerhub] and deploy into your cloud via [docker]. Now add some service. Ever heard of [aws lambda]? Anyway your boss just stopped timer. 5 min - good enough - they say. (It is oversimplification, I know, deal with it).
+How to measure easiness? Take for instance development time taken to use/apply a tool. You need database? Get an image from [dockerhub](https://hub.docker.com/) and deploy into your cloud via [docker](https://www.docker.com/). Now add a service. Ever heard of [aws lambda](https://aws.amazon.com/lambda/)? Anyway your boss just stopped timer. 5 min - good enough - they say. (It is oversimplification, I know, deal with it).
 
-Where the hell is optimistic locking, as topic suggests, in all this? You might ask that. Patience, my son, is a virtue. Why you think I mentioned amazon service called lambda? Lambda operates on events. The idea of integrating totally incompatible software via simple messages is essential for big companies. They have loads of software no one knows how to develop anymore. And they do make money. With great afford company's maintainance team managed to make the software produce and accept some kind of messages we call events. The events are handled by specialized broker. If you are interested in real-life example read introduction to [apache kafka].
+Where the hell is optimistic locking, as topic suggests, in all this? You might ask that. Patience, my son, is a virtue. Why you think I mentioned amazon service called lambda? Lambda operates on events. The idea of integrating totally incompatible software via simple messages is essential for big companies. They have loads of software no one knows how to develop anymore. And they do make money. With great afford company's maintainance team managed to make the software produce and accept some kind of messages we call events. The events are handled by specialized broker. If you are interested in real-life example read introduction to [apache kafka](https://kafka.apache.org/).
 
 That is where [reactor] wants to place itself. The tools they give you are designed to handle the stream of events and push them to java-8-like stream. [reactor] does not propagate events to cluster; just accepts them and locally process. You might think all you need is to implement producer-consumer in java. Smash ArrayBlockingQueue and you are done. Why bother with 3-rd party libraries? You can approch the problem from this side, however, your solution will be much slower - not even close.
 
@@ -317,14 +317,16 @@ This works only on linux due to function calling convention. But it is not a pro
 
 Now we have to put it together. First compile increase.asm into object file. Then compile C file into object file. Combine object files into shared library. Lastly run java.
 
-    nasm -f elf64 increase.asm
-    gcc -I/usr/lib/jvm/default/include/{.,linux} Test_NativeCounter.c -c -fPIC
-    gcc -shared -fPIC Test_NativeCounter.o increase.o -o libNativeCounter.so
-    javac Test.java
-    java -Djava.library.path=. Test
+```bash
+$ nasm -f elf64 increase.asm
+$ gcc -I/usr/lib/jvm/default/include/{.,linux} Test_NativeCounter.c -c -fPIC
+$ gcc -shared -fPIC Test_NativeCounter.o increase.o -o libNativeCounter.so
+$ javac Test.java
+$ java -Djava.library.path=. Test
 
-    NativeCounter
-    job took 11710
+NativeCounter
+job took 11710
+```
 
 Well, there goes our improvement. It is time to revalidate our opinion on CAS loop. Why performance is so horrible? Can you fix it? How to make it fast? What would happen if you replace compare-and-swap instruction (`cmpxchg [rdi], rsi`) with increment (`inc dword [rdi]`)?
 
@@ -345,7 +347,7 @@ return a+1;
 
 ## summary - the usual - pros & cons
 
-I don't know about you but I was quite optimistic and am no more about [optimistic locking][optimistic concurrency control]. The reality check performed made it clear transactional approach does not guarantee speed improvement. Since you can use atomic increment as shown above it may be a good idea to measure how many transactions fail. I see no need for it because the, more or less, 8-second time difference tells me enough. Lots of loops must happen to increase the iterator. Threads fight amongs themself. If we place guard (monitor) around iterator so that each thread must first apply for ownership, we see job takes twice the time of atomic solution. Twice sounds bad but in comparison to compare-and-swap solution is great.
+I don't know about you but I was quite optimistic and am no more about [optimistic locking][optimistic concurrency control]. The reality check performed made it clear transactional approach does not guarantee speed improvement. Since you can use atomic increment as shown above it may be a good idea to measure how many transactions fail. I see no need for it because the, more or less, 8-second time difference tells me enough. Lots of loops must happen to increase the iterator. Threads fight among themselves. If we place guard (monitor) around iterator so that each thread must first apply for ownership, we see job takes twice the time of atomic solution. Twice sounds bad but in comparison to compare-and-swap solution is great.
 
 What is great about locked increment? What is the trait that makes it so fast? I believe the solution is the best because the whole job we intend to perform is encapsulated in one command. The instruction does not need to know what is current value of iterator. The instruction behaves like a transaction in the sense it contains recipe for the job. The difference is that the processor guarantees ownership of the data we operate on.
 
@@ -355,10 +357,6 @@ As far as I know [reactor] utilities asynchronous approach. I would like to know
 
 [reactor]: http://projectreactor.io/
 [reactor-core]: http://projectreactor.io/docs/core/release/api/
-[dockerhub]: https://hub.docker.com/
-[docker]: https://www.docker.com/
-[aws lambda]: https://aws.amazon.com/lambda/
-[apache kafka]: https://kafka.apache.org/
 [into the wild async io]: https://www.youtube.com/watch?v=uGXsnB2S_vc
 [optimistic concurrency control]: https://en.wikipedia.org/wiki/Optimistic_concurrency_control
 [ACID]: https://en.wikipedia.org/wiki/ACID
